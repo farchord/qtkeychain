@@ -17,7 +17,6 @@ include(GNUInstallDirs)
 include(GenerateExportHeader)
 include(CMakePackageConfigHelpers)
 include(ECMSetupVersion)
-include(ECMGeneratePriFile)
 include(CMakeDependentOption)
 
 option(BUILD_WITH_QT6 "Build qtkeychain with Qt 6" OFF)
@@ -28,6 +27,12 @@ if(QTKEYCHAIN_STATIC)
     set(BUILD_SHARED_LIBS OFF)
     message(WARNING "QTKEYCHAIN_STATIC is deprecated. Use BUILD_SHARED_LIBS=OFF instead.")
 endif()
+
+if(NOT BUILD_WITH_QT6)
+    include(ECMGeneratePriFile)
+endif()
+
+
 CMAKE_DEPENDENT_OPTION(BUILD_TRANSLATIONS_AS_RESOURCES "Bundle translations with the library" OFF
                        "BUILD_TRANSLATIONS" OFF)
 
@@ -202,14 +207,15 @@ ecm_setup_version("${QTKEYCHAIN_VERSION}" VARIABLE_PREFIX SNORE
 if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT HAIKU)
     set(PRI_EXTRA_DEPS "dbus")
 endif()
-ecm_generate_pri_file(BASE_NAME Qt${QTKEYCHAIN_VERSION_INFIX}Keychain
+if (NOT BUILD_WITH_QT6)
+  ecm_generate_pri_file(BASE_NAME Qt${QTKEYCHAIN_VERSION_INFIX}Keychain
   LIB_NAME ${QTKEYCHAIN_TARGET_NAME}
   DEPS "core ${PRI_EXTRA_DEPS}"
   INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR}
   FILENAME_VAR pri_filename)
 
-install(FILES ${pri_filename} DESTINATION ${ECM_MKSPECS_INSTALL_DIR})
-
+  install(FILES ${pri_filename} DESTINATION ${ECM_MKSPECS_INSTALL_DIR})
+endif ()
 
 install(EXPORT Qt${QTKEYCHAIN_VERSION_INFIX}KeychainLibraryDepends
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Qt${QTKEYCHAIN_VERSION_INFIX}Keychain"
